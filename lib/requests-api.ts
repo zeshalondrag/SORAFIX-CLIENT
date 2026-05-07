@@ -574,6 +574,16 @@ export function fileNameFromUrl(url: string, fallback: string): string {
   }
 }
 
+function isYooKassaHostedPaymentUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    return host === 'yoomoney.ru' || host.endsWith('.yoomoney.ru') || host === 'yookassa.ru' || host.endsWith('.yookassa.ru');
+  } catch {
+    return false;
+  }
+}
+
 /** В блоке «Фото» справа — только изображения, без PDF и прочих документов */
 export function isPhotoForRequestSidebar(photo: Photo): boolean {
   const mime = (photo.fileType ?? (photo as { file_type?: string }).file_type ?? '').toLowerCase();
@@ -590,6 +600,12 @@ export async function openAttachmentUrl(url: string, suggestedName?: string) {
   if (!url) return;
   const name = suggestedName || fileNameFromUrl(url, 'file');
   if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof document !== 'undefined') {
+    if (isYooKassaHostedPaymentUrl(url)) {
+      // confirmation_url от ЮKassa — это hosted payment page, ее нельзя читать через fetch (CORS).
+      window.location.assign(url);
+      return;
+    }
+
     try {
       const res = await fetch(url, { mode: 'cors' });
       if (res.ok) {
