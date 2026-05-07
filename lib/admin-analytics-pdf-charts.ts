@@ -7,7 +7,7 @@ export async function registerCanvasFontFromTtfBase64(base64: string, familyName
   try {
     const face = new FontFace(familyName, `url(data:font/ttf;base64,${base64})`);
     await face.load();
-    document.fonts.add(face);
+    (document.fonts as any).add(face);
     await document.fonts.ready;
     return true;
   } catch {
