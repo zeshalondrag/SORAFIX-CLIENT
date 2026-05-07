@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-import { authApi, type User } from '@/lib/auth-api';
+import { authApi, isApiError, type User } from '@/lib/auth-api';
 import { AUTH_TOKEN_KEY, USER_DATA_KEY } from '@/lib/config';
 import { storage } from '@/lib/storage';
 
@@ -22,6 +22,7 @@ type AuthContextValue = AuthState & {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  mergeUser: (patch: Partial<User>) => Promise<void>;
 };
 
 type RegisterData = {
@@ -86,13 +87,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const profile = await authApi.validate();
       await updateUser(profile);
-    } catch {
-      await updateUser(null);
-      await storage.removeItem(AUTH_TOKEN_KEY);
+    } catch (error) {
+      // Сбрасываем сессию только при реальной невалидности токена.
+      if (isApiError(error) && (error.status === 401 || error.status === 403)) {
+        await updateUser(null);
+        await storage.removeItem(AUTH_TOKEN_KEY);
+      }
     } finally {
       setIsLoading(false);
     }
   }, [updateUser]);
+
+  const mergeUser = useCallback(async (patch: Partial<User>) => {
+    if (!user) return;
+    await updateUser({ ...user, ...patch });
+  }, [user, updateUser]);
 
   // Инициализация: сначала загружаем из storage, потом валидируем через API
   useEffect(() => {
@@ -114,10 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await updateUser(profile);
           }
           // Если API вернул невалидные данные - оставляем кешированные
-        } catch {
-          // Токен невалидный - очищаем
-          await updateUser(null);
-          await storage.removeItem(AUTH_TOKEN_KEY);
+        } catch (error) {
+          // Очищаем сессию только если токен действительно протух/невалиден.
+          if (isApiError(error) && (error.status === 401 || error.status === 403)) {
+            await updateUser(null);
+            await storage.removeItem(AUTH_TOKEN_KEY);
+          }
         }
       } else if (token) {
         // Есть токен, но нет кеша - загружаем из API
@@ -185,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     refreshUser,
+    mergeUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

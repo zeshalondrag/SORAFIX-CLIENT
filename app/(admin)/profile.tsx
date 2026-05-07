@@ -186,7 +186,7 @@ function DeactivateModal({
 export default function ProfilePage() {
   const { width } = useWindowDimensions();
   const isPhone = width < 768;
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, mergeUser } = useAuth();
   const [editMode, setEditMode] = useState(false);
   const [emailWarningVisible, setEmailWarningVisible] = useState(false);
   const [emailConfirmVisible, setEmailConfirmVisible] = useState(false);
@@ -262,7 +262,9 @@ export default function ProfilePage() {
   const handleConfirmEmail = async (code: string) => {
     try {
       await authApi.verifyEmail({ email: user?.email ?? '', code });
-      await refreshUser();
+      await mergeUser({ emailVerified: true, email_verified: true });
+      // Фоновая синхронизация профиля без принудительного логаута при временной сетевой ошибке
+      refreshUser().catch(() => {});
     } catch (e) {
       if (isApiError(e)) {
         throw new Error(e.message);
