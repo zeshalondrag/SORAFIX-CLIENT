@@ -117,20 +117,17 @@ const styles = StyleSheet.create({
   },
   overlayPhone: {
     padding: 12,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   box: {
     backgroundColor: Colors.light.background,
     borderRadius: 12,
     padding: 24,
-    width: '100%',
     maxWidth: 400,
   },
   boxPhone: {
     maxWidth: '100%',
     padding: 16,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
   },
   header: {
     alignItems: 'center',
