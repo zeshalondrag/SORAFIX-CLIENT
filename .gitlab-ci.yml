@@ -1,0 +1,45 @@
+stages:
+  - install        
+  - lint           
+  - typecheck      
+  - build          
+  - security      
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+install_dependencies:
+  stage: install
+  script:
+    - npm ci
+
+eslint_check:
+  stage: lint
+  script:
+    - echo "Запуск ESLint проверки..."
+    - npx expo lint
+  allow_failure: false
+
+typescript_check:
+  stage: typecheck
+  script:
+    - echo "Запуск проверки типов TypeScript..."
+    - npx tsc --noEmit
+  allow_failure: false
+
+build_web:
+  stage: build
+  script:
+    - echo "Запуск сборки web-версии проекта..."
+    - npx expo export --platform web
+
+security_audit:
+  stage: security
+  script:
+    - echo "Запуск аудита безопасности npm-зависимостей..."
+    - npm audit --audit-level=moderate || true
+    - echo "Проверка наличия устаревших зависимостей..."
+    - npm outdated || true
+  allow_failure: true
