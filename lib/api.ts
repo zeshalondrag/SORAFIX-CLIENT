@@ -1,5 +1,5 @@
-import { API_BASE_URL, AUTH_TOKEN_KEY } from './config';
-import { storage } from './storage';
+import { API_BASE_URL, AUTH_TOKEN_KEY } from '@/lib/config';
+import { storage } from '@/lib/storage';
 
 export type ApiError = {
   message: string;

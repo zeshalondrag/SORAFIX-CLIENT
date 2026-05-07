@@ -1,6 +1,6 @@
-import { api, type ApiError } from './api';
-import { AUTH_TOKEN_KEY } from './config';
-import { storage } from './storage';
+import { api, type ApiError } from '@/lib/api';
+import { AUTH_TOKEN_KEY } from '@/lib/config';
+import { storage } from '@/lib/storage';
 
 export type User = {
   id: number;
